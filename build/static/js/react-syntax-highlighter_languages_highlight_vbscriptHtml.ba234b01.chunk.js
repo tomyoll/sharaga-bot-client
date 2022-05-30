@@ -1,0 +1,2 @@
+(self.webpackChunkfront=self.webpackChunkfront||[]).push([[8884],{1434:function(n){n.exports=function(n){return{name:"VBScript in HTML",subLanguage:"xml",contains:[{begin:"<%",end:"%>",subLanguage:"vbscript"}]}}}}]);
+//# sourceMappingURL=react-syntax-highlighter_languages_highlight_vbscriptHtml.ba234b01.chunk.js.map
