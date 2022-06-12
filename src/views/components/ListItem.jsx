@@ -2,19 +2,15 @@ import React from "react";
 import Box from "@mui/material/Box";
 import { Button, Grid, Stack, Typography, Container } from "@mui/material";
 import { Link } from "react-router-dom";
-import { useRecoilState } from "recoil";
-import { accessTokenSelector } from "../../store/RecoilState";
 
 function ListItem({ title, time, id, answersCount, user, author, removeQuestion }) {
-  const [accessToken] = useRecoilState(accessTokenSelector);
-  console.log(user);
   return (
     <Container
       sx={{
         width: "70%",
         backgroundColor: "rgb(85, 28, 132)"
       }}>
-      <Grid container direction="row" wrap="nowrap">
+      {/* <Grid container direction="row" wrap="nowrap">
         <Grid item xs={11}>
           <Box>
             <Stack justifyContent="center" spacing={2} ml={3} mt={2}>
@@ -45,7 +41,7 @@ function ListItem({ title, time, id, answersCount, user, author, removeQuestion 
             <Typography>Answers</Typography>
           </Stack>
         </Grid>
-      </Grid>
+      </Grid> */}
     </Container>
   );
 }

@@ -18,9 +18,8 @@ import Alert from "@mui/material/Alert";
 import { makeStyles } from "@mui/styles";
 import { useNavigate } from "react-router-dom";
 import { useRecoilState } from "recoil";
-import { accessTokenSelector, userSelector } from "../../store/RecoilState";
 import api from "../../api";
-import { VALIDATION_ERRORS } from "../../constants";
+import { adminSelector } from "../../store/RecoilState";
 
 const theme = createTheme();
 
@@ -64,44 +63,33 @@ export default function Auth() {
   const theme = useTheme();
 
   const navigate = useNavigate();
+  const [admin, setAdmin] = useRecoilState(adminSelector);
   const [password, setPassword] = useState({ password: "", repeat: "" });
-  const [userName, setUserName] = useState("");
-  const [isRegister, setRegister] = useState(false);
-  const [, setToken] = useRecoilState(accessTokenSelector);
-  const [, setUser] = useRecoilState(userSelector);
+  const [email, setEmail] = useState("");
   const [hasError, setHasError] = useState({ error: false, message: "" });
 
-  const onUserNameChange = (e) => {
-    setUserName(e.target.value);
+  const onEmailChange = (e) => {
+    setEmail(e.target.value);
   };
   const onPasswordChange = (e) => {
     setPassword({ password: e.target.value, repeat: password.repeat });
   };
 
-  const onRepeatChange = (e) => {
-    setPassword({ password: password.password, repeat: e.target.value });
-  };
-
   const onSignInSubmit = async (e) => {
     e.preventDefault;
     try {
-      if (isRegister && password.password !== password.repeat) {
-        throw { error: VALIDATION_ERRORS.WRONG_PASSWORDS };
-      }
-
       const response = await api.post({
-        path: !isRegister ? "/user/login" : "/user/register",
+        path: "/admin/signIn",
         data: {
-          userName,
+          email,
           password: password.password
         }
       });
-      const { _id, accessToken, refreshToken, role } = response.user;
-      setUser({ _id, role, userName: response.user.userName });
-      setToken(accessToken);
-      localStorage.setItem("refresh", refreshToken);
 
-      return navigate("/");
+      localStorage.setItem('token', response.admin.token)
+
+      setAdmin(response.admin)
+      return navigate("/users");
     } catch (e) {
       console.log(e);
       return setHasError({ error: true, message: e.error });
@@ -117,7 +105,7 @@ export default function Auth() {
               <LockOutlinedIcon />
             </Avatar>
             <Typography component={"h1"} variant={"h5"}>
-              {!isRegister ? "Welcome! Enter in your account" : "Join us! Create your account"}
+              Enter in your account
             </Typography>
             <Container className={classes.form}>
               <TextField
@@ -125,12 +113,12 @@ export default function Auth() {
                 margin={"normal"}
                 required
                 fullWidth
-                id={"username"}
-                label={"Username"}
-                name={"username"}
-                autoComplete="username"
+                id={"email"}
+                label={"Email"}
+                name={"email"}
+                autoComplete="email"
                 autoFocus
-                value={userName}
+                value={email}
                 inputProps={{
                   sx: {
                     color: "rgba(207, 201, 192, 0.87)"
@@ -141,7 +129,7 @@ export default function Auth() {
                     color: "rgba(207, 201, 192, 0.87)"
                   }
                 }}
-                onChange={onUserNameChange}
+                onChange={onEmailChange}
               />
 
               <TextField
@@ -167,31 +155,6 @@ export default function Auth() {
                 }}
                 onChange={onPasswordChange}
               />
-              {isRegister ? (
-                <TextField
-                  variant="outlined"
-                  margin="normal"
-                  required
-                  fullWidth
-                  name="confirmPassword"
-                  label="Confirm password"
-                  type="password"
-                  id="password"
-                  autoComplete="current-password"
-                  value={password.repeat}
-                  inputProps={{
-                    sx: {
-                      color: "rgba(207, 201, 192, 0.87)"
-                    }
-                  }}
-                  InputLabelProps={{
-                    sx: {
-                      color: "rgba(207, 201, 192, 0.87)"
-                    }
-                  }}
-                  onChange={onRepeatChange}
-                />
-              ) : null}
               <Button
                 type={"submit"}
                 fullWidth
@@ -205,15 +168,6 @@ export default function Auth() {
               </Button>
               <Grid style={{ marginTop: 20 }} container>
                 <Grid item xs>
-                  <Link
-                    className={classes.link}
-                    onClick={() => {
-                      setRegister(!isRegister);
-                    }}>
-                    {!isRegister
-                      ? "Don`t have an account? Registration"
-                      : "Already have account? Log in"}
-                  </Link>
                   {hasError.error ? (
                     <Collapse in={hasError.error}>
                       <Alert

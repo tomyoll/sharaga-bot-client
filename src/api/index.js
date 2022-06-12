@@ -2,7 +2,9 @@ import axios from "axios";
 import { REQUEST_RESPONSES } from "../constants";
 class Api {
   constructor() {
-    this.loginUrl = "/login";
+    this.loginUrl = "/auth";
+
+    this.api = axios.create();
   }
 
   post({ path = "", data = {} }) {
@@ -44,14 +46,14 @@ class Api {
   }) {
     const headers = {};
 
-    //const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
-    // if (token) {
-    //   headers.Authorization = `Bearer ${token}`;
-    // }
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
 
     try {
-      const response = await axios({
+      const response = await this.api({
         method,
         url: `${process.env.REACT_APP_API_URL}${path}`,
         params,
@@ -59,6 +61,12 @@ class Api {
         headers,
         responseType,
       });
+
+      if (response.data && response.data === "expired") {
+        const newToken = await this.get({ path: "/refresh" });
+
+        localStorage.setItem("token", newToken);
+      }
 
       if (fullResponse) {
         return response;
@@ -70,19 +78,52 @@ class Api {
 
       return null;
     } catch (error) {
-      if (error.response && error.response.status === 401) {
+      const originalRequest = error.config;
+
+      if (
+        error.response &&
+        error.response.status === 401 &&
+        error.config &&
+        error.config.headers._isRetry !== "true"
+      ) {
+        try {
+          const response = await axios.get(
+            `${process.env.REACT_APP_API_URL}/refresh`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                _isRetry: "true",
+              },
+            }
+          );
+
+          console.log({ originalRequest });
+
+          originalRequest.headers.Authorization = `Bearer ${response.data}`;
+
+          localStorage.setItem("token", response.data);
+          return axios.request({
+            method,
+            url: `${process.env.REACT_APP_API_URL}${path}`,
+            params,
+            data,
+            headers: { Authorization: `Bearer ${response.data}` },
+            responseType,
+          });
+        } catch (e) {
+          window.location.href = this.loginUrl;
+        }
         window.location.href = this.loginUrl;
       }
 
-      console.log(error);
+      if (error.response && error.response.status === 401) {
+        window.location.href = this.loginUrl;
+      }
 
       if (error.response) {
         throw { error: error.response.data.error };
       }
 
-      if (error.request) {
-        throw { error: REQUEST_RESPONSES.NO_RESPONSE };
-      }
       throw { error: error.message };
     }
   }
