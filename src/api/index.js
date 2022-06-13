@@ -78,44 +78,6 @@ class Api {
 
       return null;
     } catch (error) {
-      const originalRequest = error.config;
-
-      if (
-        error.response &&
-        error.response.status === 401 &&
-        error.config &&
-        error.config.headers._isRetry !== "true"
-      ) {
-        try {
-          const response = await axios.get(
-            `${process.env.REACT_APP_API_URL}/refresh`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                _isRetry: "true",
-              },
-            }
-          );
-
-          console.log({ originalRequest });
-
-          originalRequest.headers.Authorization = `Bearer ${response.data}`;
-
-          localStorage.setItem("token", response.data);
-          return axios.request({
-            method,
-            url: `${process.env.REACT_APP_API_URL}${path}`,
-            params,
-            data,
-            headers: { Authorization: `Bearer ${response.data}` },
-            responseType,
-          });
-        } catch (e) {
-          window.location.href = this.loginUrl;
-        }
-        window.location.href = this.loginUrl;
-      }
-
       if (error.response && error.response.status === 401) {
         window.location.href = this.loginUrl;
       }

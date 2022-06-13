@@ -9,30 +9,29 @@ import { adminSelector } from "../../store/RecoilState";
 const MainLayout = () => {
   const [admin, setAdmin] = useRecoilState(adminSelector);
 
- 
-
-  useEffect( () => {
-    async function fetchAdmin() {
-      const response = await api.get({ path: "/admin/profile" });
-  
-      return setAdmin(response.admin);
-    }
-    fetchAdmin()
-  }, []);
-
   const navigate = useNavigate();
 
   async function sendSignOutRequest() {
-    await api.get({ path: '/admin/signOut' });
+    const response = await api.get({ path: '/admin/signOut' });
     localStorage.removeItem('token');
     navigate('/auth')
   }
 
+  useEffect( () => {
+    async function fetchAdmin() {
+      localStorage.setItem('isRetry', false)
+      const response = await api.get({ path: "/admin/profile" });
+      localStorage.setItem('isRetry', true)
+  
+      return setAdmin(response.admin);
+    }
+    localStorage.getItem ('isRetry') ? fetchAdmin() : null;
+  }, []);
+
   return (
     <AppBar sx={{ backgroundColor: "rgb(29, 81, 131)" }}>
       <Toolbar>
-        {console.log(admin)}
-        { admin?.role === 1
+        { admin?.role === 1 && localStorage.getItem('token')
         ? (
           <Button
           variant="contained"
@@ -42,25 +41,28 @@ const MainLayout = () => {
         )
         : null
        }
-        { localStorage.getItem('token') 
-        ? (<Button
+        {  
+       localStorage.getItem('token') ?  (
+        <><Button
         variant="contained"
         onClick={sendSignOutRequest}
         >
           signOut
-        </Button>)
+        </Button>
+           <Button
+           variant="contained"
+           onClick={() => navigate("/users")}>
+           Users
+         </Button>
+         <Button
+           variant="contained"
+           onClick={() => navigate("/content")}>
+           Content
+         </Button>
+         </>
+        )
         : null
        }
-        <Button
-          variant="contained"
-          onClick={() => navigate("/users")}>
-          Users
-        </Button>
-        <Button
-          variant="contained"
-          onClick={() => navigate("/content")}>
-          Content
-        </Button>
       </Toolbar>
     </AppBar>
   );
